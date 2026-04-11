@@ -1,9 +1,10 @@
+import { NodemailerEmailProvider } from '@nauth-toolkit/email-nodemailer';
 import {
   NAuthModuleConfig,
   createDatabaseStorageAdapter,
 } from '@nauth-toolkit/nestjs';
-import { ConsoleEmailProvider } from '@nauth-toolkit/email-console';
 import { ConsoleSMSProvider } from '@nauth-toolkit/sms-console';
+import { Logger } from '@nestjs/common';
 
 export const authConfig: NAuthModuleConfig = {
   jwt: {
@@ -18,6 +19,9 @@ export const authConfig: NAuthModuleConfig = {
       rotation: true,
     },
   },
+  logger: {
+    instance: new Logger('NAuth'),
+  },
   password: {
     minLength: 8,
     requireUppercase: true,
@@ -30,7 +34,25 @@ export const authConfig: NAuthModuleConfig = {
   storageAdapter: createDatabaseStorageAdapter(),
 
   // console providers log to stdout — replace with real providers for production
-  emailProvider: new ConsoleEmailProvider(),
+  emailProvider: new NodemailerEmailProvider({
+    transport: {
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT),
+      secure: false,
+      // keep timeouts low so requests don't hang on smtp issues
+      connectionTimeout: 20000, // 20 seconds
+      greetingTimeout: 20000, // 20 seconds
+      socketTimeout: 20000, // 20 seconds
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    },
+    defaults: {
+      from: process.env.SMTP_USER,
+    },
+  }),
+  // emailProvider: new ConsoleEmailProvider(),
   smsProvider: new ConsoleSMSProvider(),
 
   signup: {

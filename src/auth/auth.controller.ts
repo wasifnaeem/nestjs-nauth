@@ -1,34 +1,61 @@
 import {
-  AuthGuard,
-  AuthService,
-  CurrentUser,
+  AuthResponseDTO,
+  ChangePasswordDTO,
+  ChangePasswordResponseDTO,
+  ConfirmForgotPasswordDTO,
+  ConfirmForgotPasswordResponseDTO,
+  ForgotPasswordDTO,
+  ForgotPasswordResponseDTO,
+  GetSetupDataDTO,
+  GetSetupDataResponseDTO,
+  GetUserSessionsResponseDTO,
+  type IUser,
   LoginDTO,
   LogoutDTO,
   LogoutResponseDTO,
-  Public,
+  MFAService,
+  RefreshTokenDTO,
+  ResendCodeDTO,
+  ResendCodeResponseDTO,
+  RespondChallengeDTO,
   SignupDTO,
+  TokenResponse,
+} from '@nauth-toolkit/nestjs';
+import {
+  AuthGuard,
+  AuthService,
+  CurrentUser,
+  Public,
   UserResponseDTO,
 } from '@nauth-toolkit/nestjs';
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
   HttpCode,
   HttpStatus,
+  Inject,
   Post,
   Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
 import type { Request } from 'express';
-// eslint-disable-next-line prettier/prettier
-import type { AuthResponseDTO, ChangePasswordDTO, ChangePasswordResponseDTO, ConfirmForgotPasswordDTO, ConfirmForgotPasswordResponseDTO, ForgotPasswordDTO, ForgotPasswordResponseDTO, IUser, RefreshTokenDTO, ResendCodeDTO, ResendCodeResponseDTO, RespondChallengeDTO, TokenResponse } from '@nauth-toolkit/nestjs';
 
 @UseGuards(AuthGuard)
 @Controller('auth')
 export class AuthController {
-  // eslint-disable-next-line prettier/prettier
-  constructor(private readonly authService: AuthService) { }
+  constructor(
+    private readonly authService: AuthService,
+    @Inject(MFAService)
+    private readonly mfaService?: MFAService,
+  ) { }
+
+  @Get('profile')
+  getProfile(@CurrentUser() user: IUser): UserResponseDTO {
+    return UserResponseDTO.fromEntity(user);
+  }
 
   @Public()
   @Post('signup')
@@ -89,6 +116,28 @@ export class AuthController {
   }
 
   @Public()
+  @Post('challenge/challenge-data')
+  @HttpCode(HttpStatus.OK)
+  async getChallengeData(@Body() dto: any) {
+    if (!this.mfaService)
+      throw new BadRequestException('MFA service is not available');
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    return await this.mfaService.getChallengeData(dto);
+  }
+
+  @Public()
+  @Post('challenge/setup-data')
+  @HttpCode(HttpStatus.OK)
+  async getSetupData(
+    @Body() dto: GetSetupDataDTO,
+  ): Promise<GetSetupDataResponseDTO> {
+    if (!this.mfaService) {
+      throw new BadRequestException('MFA service is not available');
+    }
+    return await this.mfaService.getSetupData(dto);
+  }
+
+  @Public()
   @Post('forgot-password/confirm')
   @HttpCode(HttpStatus.OK)
   async confirmForgotPassword(
@@ -118,8 +167,9 @@ export class AuthController {
     return await this.authService.logout(dto);
   }
 
-  @Get('profile')
-  getProfile(@CurrentUser() user: IUser): UserResponseDTO {
-    return UserResponseDTO.fromEntity(user);
+  @Get('sessions')
+  @HttpCode(HttpStatus.OK)
+  async getUserSessions(): Promise<GetUserSessionsResponseDTO> {
+    return await this.authService.getUserSessions();
   }
 }

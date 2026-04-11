@@ -23,6 +23,7 @@
     "@nauth-toolkit/core": "^0.2.3",
     "@nauth-toolkit/database-typeorm-mysql": "^0.2.3",
     "@nauth-toolkit/email-console": "^0.2.3",
+    "@nauth-toolkit/email-nodemailer": "^0.2.3",
     "@nauth-toolkit/nestjs": "^0.2.3",
     "@nauth-toolkit/sms-console": "^0.2.3",
     "@nauth-toolkit/social-google": "^0.2.3",
