@@ -7,6 +7,7 @@ import { GoogleSocialAuthModule } from '@nauth-toolkit/social-google/nestjs';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthController } from './auth/auth.controller';
+import { SocialRedirectController } from './auth/social-redirect.controller';
 import { authConfig } from './config/auth.config';
 
 @Module({
@@ -26,6 +27,6 @@ import { authConfig } from './config/auth.config';
     AuthModule.forRoot(authConfig),
     GoogleSocialAuthModule,
   ],
-  controllers: [AuthController],
+  controllers: [AuthController, SocialRedirectController],
 })
-export class AppModule { }
+export class AppModule {}

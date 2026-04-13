@@ -19,6 +19,9 @@ export const authConfig: NAuthModuleConfig = {
       rotation: true,
     },
   },
+  tokenDelivery: {
+    method: 'cookies',
+  },
   logger: {
     instance: new Logger('NAuth'),
   },
@@ -29,6 +32,30 @@ export const authConfig: NAuthModuleConfig = {
     requireSpecialChars: true,
   },
 
+  // social login — shared routes delegate to SocialRedirectHandler (see social-redirect.controller.ts)
+  social: {
+    redirect: {
+      frontendBaseUrl: process.env.FRONTEND_BASE_URL ?? 'http://localhost:4200',
+
+      // Prevent open redirects — only allow relative returnTo paths
+      allowAbsoluteReturnTo: false,
+      allowedReturnToOrigins: ['http://localhost:4200'],
+    },
+    google: {
+      enabled: !!(
+        process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+      ),
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackUrl:
+        process.env.GOOGLE_CALLBACK_URL ??
+        'http://localhost:3000/auth/social/google/callback',
+      autoLink: true,
+      allowSignup: true,
+      scopes: ['openid', 'email', 'profile'],
+    },
+  },
+
   // uses your typeorm database for transient storage (rate limits, locks, etc.)
   // for multi-server production deployments, use createRedisStorageAdapter() instead
   storageAdapter: createDatabaseStorageAdapter(),
@@ -36,20 +63,22 @@ export const authConfig: NAuthModuleConfig = {
   // console providers log to stdout — replace with real providers for production
   emailProvider: new NodemailerEmailProvider({
     transport: {
-      host: process.env.SMTP_HOST,
+      host: String(process.env.SMTP_HOST),
       port: Number(process.env.SMTP_PORT),
-      secure: false,
+      secure: Number(process.env.SMTP_PORT) === 465,
       // keep timeouts low so requests don't hang on smtp issues
       connectionTimeout: 20000, // 20 seconds
       greetingTimeout: 20000, // 20 seconds
       socketTimeout: 20000, // 20 seconds
       auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
+        user: String(process.env.SMTP_USER),
+        pass: String(process.env.SMTP_PASS),
       },
     },
     defaults: {
-      from: process.env.SMTP_USER,
+      from:
+        process.env.SMTP_USER ??
+        `Nauth App <${String(process.env.SMTP_USER ?? '')}>`,
     },
   }),
   // emailProvider: new ConsoleEmailProvider(),
@@ -65,5 +94,8 @@ export const authConfig: NAuthModuleConfig = {
       rateLimitMax: 3,
       rateLimitWindow: 3600,
     },
+  },
+  auditLogs: {
+    enabled: true,
   },
 } satisfies NAuthModuleConfig;
