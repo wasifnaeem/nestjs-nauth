@@ -37,6 +37,14 @@ export class SocialRedirectController {
   ) {}
 
   @Public()
+  @Post('google/verify')
+  async verifyGoogle(@Body() dto: VerifyTokenDTO): Promise<AuthResponseDTO> {
+    if (!this.googleAuth)
+      throw new BadRequestException('Google OAuth is not configured');
+    return await this.googleAuth.verifyToken(dto);
+  }
+
+  @Public()
   @Redirect()
   @Get(':provider/redirect')
   async start(
@@ -69,7 +77,7 @@ export class SocialRedirectController {
 
   @Public()
   @Post('exchange')
-  @TokenDelivery('json')
+  @TokenDelivery('cookies')
   async exchange(@Body() dto: SocialExchangeDTO): Promise<AuthResponseDTO> {
     return this.socialRedirect.exchange(dto.exchangeToken);
   }

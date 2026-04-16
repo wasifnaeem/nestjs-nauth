@@ -1,4 +1,4 @@
-import { NodemailerEmailProvider } from '@nauth-toolkit/email-nodemailer';
+import { ConsoleEmailProvider } from '@nauth-toolkit/email-console';
 import {
   NAuthModuleConfig,
   createDatabaseStorageAdapter,
@@ -37,8 +37,8 @@ export const authConfig: NAuthModuleConfig = {
     redirect: {
       frontendBaseUrl: process.env.FRONTEND_BASE_URL ?? 'http://localhost:4200',
 
-      // Prevent open redirects — only allow relative returnTo paths
-      allowAbsoluteReturnTo: false,
+      // when true, absolute returnTo URLs must match allowedReturnToOrigins (open-redirect safe)
+      allowAbsoluteReturnTo: true,
       allowedReturnToOrigins: ['http://localhost:4200'],
     },
     google: {
@@ -53,6 +53,10 @@ export const authConfig: NAuthModuleConfig = {
       autoLink: true,
       allowSignup: true,
       scopes: ['openid', 'email', 'profile'],
+      oauthParams: {
+        prompt: 'select_account',
+        // hd: 'company.com',
+      },
     },
   },
 
@@ -61,27 +65,27 @@ export const authConfig: NAuthModuleConfig = {
   storageAdapter: createDatabaseStorageAdapter(),
 
   // console providers log to stdout — replace with real providers for production
-  emailProvider: new NodemailerEmailProvider({
-    transport: {
-      host: String(process.env.SMTP_HOST),
-      port: Number(process.env.SMTP_PORT),
-      secure: Number(process.env.SMTP_PORT) === 465,
-      // keep timeouts low so requests don't hang on smtp issues
-      connectionTimeout: 20000, // 20 seconds
-      greetingTimeout: 20000, // 20 seconds
-      socketTimeout: 20000, // 20 seconds
-      auth: {
-        user: String(process.env.SMTP_USER),
-        pass: String(process.env.SMTP_PASS),
-      },
-    },
-    defaults: {
-      from:
-        process.env.SMTP_USER ??
-        `Nauth App <${String(process.env.SMTP_USER ?? '')}>`,
-    },
-  }),
-  // emailProvider: new ConsoleEmailProvider(),
+  // emailProvider: new NodemailerEmailProvider({
+  //   transport: {
+  //     host: String(process.env.SMTP_HOST),
+  //     port: Number(process.env.SMTP_PORT),
+  //     secure: Number(process.env.SMTP_PORT) === 465,
+  //     // keep timeouts low so requests don't hang on smtp issues
+  //     connectionTimeout: 20000, // 20 seconds
+  //     greetingTimeout: 20000, // 20 seconds
+  //     socketTimeout: 20000, // 20 seconds
+  //     auth: {
+  //       user: String(process.env.SMTP_USER),
+  //       pass: String(process.env.SMTP_PASS),
+  //     },
+  //   },
+  //   defaults: {
+  //     from:
+  //       process.env.SMTP_USER ??
+  //       `Nauth App <${String(process.env.SMTP_USER ?? '')}>`,
+  //   },
+  // }),
+  emailProvider: new ConsoleEmailProvider(),
   smsProvider: new ConsoleSMSProvider(),
 
   signup: {
